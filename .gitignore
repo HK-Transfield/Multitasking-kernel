@@ -1,0 +1,5 @@
+*.srec
+parallel_entry.o
+parallel_task.o
+serial_entry.o
+serial_task.o
