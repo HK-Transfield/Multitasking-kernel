@@ -66,41 +66,43 @@ void format_clear() {
 }
 
 void serial_main() {
+
+    int rx = 0;
+    int currFormat = 0;
+
 main_loop:
     while(1) {
 
-        
-        /*
-        
-        Need to fix it so that if any other character is pressed it will ignore it
-        */
-        switch (WrampSp2->Rx)
-        {
-            // no characters have been recieved from SP2
-            case 0:
-                format_1(counter);
-                break;
+        // will wait for character to be set
+        rx = WrampSp2->Rx;
 
-            // sent '1' to SP2  
-            case '1': 
-                format_1(counter);
-                break;
-            
-            // sent '2' to SP2
-            case '2':
-                format_2(counter);        
-                break;
+        if (rx == '1' || rx == '2' || rx == '3' || rx == 'q') { // 1, 2, 3, or q have been recieved
+            while (1) {
 
-            case '3':
-                format_3(counter);
-                break;
+                rx = WrampSp2->Rx;
 
-            case 'q':
-                format_clear();
-                return;
-            
-            default:
-                break;
+                if (rx == 'q') {
+                    format_clear();
+                    return;
+                }
+                
+                if (rx == '1' || currFormat == '1') {
+                    currFormat = '1';
+                    format_1(counter);
+                }
+                   
+                
+                if (rx == '2' || currFormat == '2') {
+                    currFormat = '2';
+                    format_2(counter);
+                }
+
+                if (rx == '3' || currFormat == '3') {
+                    currFormat = '3';
+                    format_3(counter);
+                }
+            }
         }
+        format_1(counter);
     }    
 }

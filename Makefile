@@ -14,7 +14,7 @@ GAMES=	gameSelect.O breakout.O rocks.O
 QUESTIONS_DONE=	parallel_task.srec \
 				serial_task.srec \
 				kernel_q3.srec \
-#				kernel_q4.srec \
+				kernel_q4.srec \
 #				kernel_q5.srec \
 #				kernel_q6.srec \
 #				kernel_q7.srec \

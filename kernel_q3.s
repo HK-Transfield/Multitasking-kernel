@@ -20,12 +20,9 @@
 .equ sp2_stat,		0x71003
 .equ sp2_iack,		0x71004
 
-# Define PCBs
-.equ pcb_link, 0
-.equ pcb_reg1, 1
-.equ pcb_reg2, 2
-.equ pcb_reg3, 3
+######################################################################
 
+.text
 .global main
 main:
 
@@ -71,9 +68,3 @@ handle_irq2:
 
 .bss
 old_vector: .word
-
-    .space 100
-process1_stack:
-
-    .space 100
-process2_stack:
