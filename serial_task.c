@@ -70,34 +70,26 @@ void serial_main() {
     int rx = 0;
     int currFormat = 0;
 
-main_loop:
     while(1) {
-
-        // will wait for character to be set
-        rx = WrampSp2->Rx;
-
-        if (rx == '1' || rx == '2' || rx == '3' || rx == 'q') { // 1, 2, 3, or q have been recieved
+        if (WrampSp2->Rx == '1' || WrampSp2->Rx == '2' || WrampSp2->Rx == '3' || WrampSp2->Rx == 'q') { // 1, 2, 3, or q have been recieved
             while (1) {
 
-                rx = WrampSp2->Rx;
-
-                if (rx == 'q') {
+                if (WrampSp2->Rx == 'q') {
                     format_clear();
                     return;
                 }
                 
-                if (rx == '1' || currFormat == '1') {
+                if (WrampSp2->Rx == '1' || currFormat == '1') {
                     currFormat = '1';
                     format_1(counter);
                 }
-                   
-                
-                if (rx == '2' || currFormat == '2') {
+                     
+                if (WrampSp2->Rx == '2' || currFormat == '2') {
                     currFormat = '2';
                     format_2(counter);
                 }
 
-                if (rx == '3' || currFormat == '3') {
+                if (WrampSp2->Rx == '3' || currFormat == '3') {
                     currFormat = '3';
                     format_3(counter);
                 }
