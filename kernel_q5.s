@@ -47,11 +47,13 @@
 main:
     addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
 
-# PCB setup 
-    la $1, serial_pcb     # Setup the PCB for process 1
+	
+# PCB setup for the serial task process
+#######################################
+    la $1, serial_pcb    
 
 # Setup the link field    
-    la $2, serial_pcb
+    la $2, parallel_pcb
     sw $2, pcb_link($1)
 
 # Setup the stack pointer
@@ -62,13 +64,33 @@ main:
     la $2, serial_process
     sw $2, pcb_ear($1)
 
-# Set first process as current process
-    la $1, serial_pcb
-    sw $1, current_process($0)
+# Setup the $cctrl field
+    sw $5, pcb_cctrl($1)
+
+	
+# PCB setup for the parallel task process
+#########################################	
+    la $1, parallel_pcb
+
+# Setup the link field    
+    la $2, serial_pcb
+    sw $2, pcb_link($1)
+
+# Setup the stack pointer
+    la $2, parallel_stack
+    sw $2, pcb_sp($1)
+
+# Setup the $ear field
+    la $2, parallel_process
+    sw $2, pcb_ear($1)
 
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
 
+# Set serial process as current process
+    la $1, serial_pcb
+    sw $1, current_process($0)
+	
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
     andi $1, $1, 0x000f     # Mask (disable) all interrupts
@@ -93,6 +115,9 @@ main:
 serial_process:
     jal serial_main
 
+parallel_process:
+    jal parallel_main
+	
 ######################################################################
 
 handler:
@@ -110,10 +135,11 @@ handle_irq2:
     addi $13, $13, 1        # Increment counter by one
     sw $13, counter($0)     # Save new counter value
 
-    lw $13, time_slice($0)
-    subui $13, $13, 1
-    sw $13, time_slice($0)
-    beqz $13, dispatcher
+# Decrement time slice of process
+    lw $13, time_slice($0)  # Load current value of the time slice from memory
+    subui $13, $13, 1       # Subtract 1 from the current time slice value
+    sw $13, time_slice($0)  # Save it back to memory
+    beqz $13, dispatcher    # If the time slice is 0, call the dispatcher
 
     rfe
 
@@ -160,8 +186,9 @@ schedule:
 
 load_context:
 
-# Set its time slice duration
-    addui $13, $0, 2
+# Set the time slice duration
+	#addui $13, $0, 2
+	addui $13, $0, 100
     sw $13, time_slice($0)
 
     lw $13, current_process($0) # Get PCB of current process
@@ -200,13 +227,19 @@ load_context:
 
 .data
 time_slice: .word 2
-
+# time_slice: .word 100
+	
 .bss
 old_vector: .word
 current_process: .word
 
     .space 200              # Stack label is below because stacks grow form the top of the stack
 serial_stack:             # towards the lower addresses
+	.space 200
+parallel_stack:	
 
 serial_pcb:
     .space 17
+
+parallel_pcb:
+	.space 17

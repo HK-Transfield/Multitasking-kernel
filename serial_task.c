@@ -74,7 +74,7 @@ void serial_main() {
         if (WrampSp2->Rx == '1' || WrampSp2->Rx == '2' || WrampSp2->Rx == '3' || WrampSp2->Rx == 'q') { // 1, 2, 3, or q have been recieved
             while (1) {
 
-                if (WrampSp2->Rx == 'q') {
+                if (WrampSp2->Rx == 'q') { // q, quits the program
                     format_clear();
                     return;
                 }
