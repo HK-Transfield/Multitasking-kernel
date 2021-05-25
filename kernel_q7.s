@@ -230,7 +230,7 @@ schedule:
     sw $13, current_process($0) # Set next process as current process
     
 
-# study queues
+# study queues?
 reset_time_slice_ports:   
     addui $13, $0, 1
     sw $13, time_slice_ports($0)

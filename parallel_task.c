@@ -14,24 +14,29 @@ void writeDecSSD(int n) {
     int rem = 0;
 
     rem = n % 10;
-    n = n / 10;
     WrampParallel->LowerRightSSD = rem;
-    rem = n % 10;
     n = n / 10;
+
+    rem = n % 10;
     WrampParallel->LowerLeftSSD = rem;
-    rem = n % 10;
     n = n / 10;
+    
+    rem = n % 10;
     WrampParallel->UpperRightSSD = rem;
+    n = n / 10;
+    
     rem = n % 10;
     WrampParallel->UpperLeftSSD = rem;
 }
 
 void parallel_main() {
+
     // declase variables
     int readSwitches = 0;
     int pushButtons = 0;
 
     while(1) { // begin infinite loop
+
         // read values from parallal I/O
         readSwitches = WrampParallel->Switches;
         pushButtons = WrampParallel->Buttons;
