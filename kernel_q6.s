@@ -50,9 +50,10 @@ main:
     sw $2, 1($sp)
     sw $5, 2($sp)
 
+# PCB setup for the serial task process
+#########################################	
     addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
-
-# PCB setup 
+    
     la $1, serial_pcb     
 
 # Setup the link field    
@@ -74,15 +75,15 @@ main:
 # Set first process as current process
     la $1, serial_pcb
     sw $1, current_process($0)
-
-    addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
 	
 # PCB setup for the parallel task process
 #########################################	
+    addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
+    
     la $1, parallel_pcb
 
 # Setup the link field    
-    la $2, serial_pcb
+    la $2, gameSelect_pcb
     sw $2, pcb_link($1)
 
 # Setup the stack pointer
@@ -91,6 +92,27 @@ main:
 
 # Setup the $ear field
     la $2, parallel_process
+    sw $2, pcb_ear($1)
+
+# Setup the $cctrl field
+    sw $5, pcb_cctrl($1)
+
+# PCB setup for the gameSelect task process
+#########################################	
+    addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
+    
+    la $1, gameSelect_pcb
+
+# Setup the link field    
+    la $2, serial_pcb
+    sw $2, pcb_link($1)
+
+# Setup the stack pointer
+    la $2, gameSelect_stack
+    sw $2, pcb_sp($1)
+
+# Setup the $ear field
+    la $2, gameSelect_process
     sw $2, pcb_ear($1)
 
 # Setup the $cctrl field
@@ -127,6 +149,9 @@ serial_process:
 
 parallel_process:
     jal parallel_main
+
+gameSelect_process:
+    jal gameSelect_main
 	
 ######################################################################
 
@@ -227,7 +252,6 @@ load_context:
     lw $sp, pcb_sp($13)
     lw $ra, pcb_ra($13)
 
-    #break
     rfe                     # Return to new process
 
 ######################################################################
@@ -239,14 +263,22 @@ time_slice: .word 2
 old_vector: .word
 current_process: .word
 
-    .space 200              # Stack label is below because stacks grow form the top of the stack
+# Define stack spaces
+    .space 200             # Stack label is below because stacks grow form the top of the stack
 serial_stack:             # towards the lower addresses
 
 	.space 200
 parallel_stack:	
 
+	.space 200
+gameSelect_stack:	
+
+# Define PCB spaces
 serial_pcb:
     .space 18
 
 parallel_pcb:
+	.space 18
+
+gameSelect_pcb:
 	.space 18

@@ -62,12 +62,12 @@ main:
     la $2, serial_process
     sw $2, pcb_ear($1)
 
+# Setup the $cctrl field
+    sw $5, pcb_cctrl($1)
+
 # Set first process as current process
     la $1, serial_pcb
     sw $1, current_process($0)
-
-# Setup the $cctrl field
-    sw $5, pcb_cctrl($1)
 
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
@@ -209,4 +209,4 @@ current_process: .word
 serial_stack:             # towards the lower addresses
 
 serial_pcb:
-    .space 17
+    .space 18

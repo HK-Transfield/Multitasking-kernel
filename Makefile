@@ -16,7 +16,7 @@ QUESTIONS_DONE=	parallel_task.srec \
 				kernel_q3.srec \
 				kernel_q4.srec \
 				kernel_q5.srec \
-#				kernel_q6.srec \
+				kernel_q6.srec \
 #				kernel_q7.srec \
 #				kernel_q8.srec \
 #				kernel_q9.srec
