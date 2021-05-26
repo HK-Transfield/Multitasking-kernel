@@ -41,7 +41,7 @@ void parallel_main() {
         readSwitches = WrampParallel->Switches;
         pushButtons = WrampParallel->Buttons;
 
-        if(pushButtons == 1 || pushButtons == 2) { // rightmost push button was pressed
+        if(pushButtons == 1 || pushButtons == 2 || pushButtons == 4) { // rightmost push button was pressed
             while(1) {
                 readSwitches = WrampParallel->Switches;
                 pushButtons = WrampParallel->Buttons;
@@ -55,9 +55,6 @@ void parallel_main() {
                 if (pushButtons == 4)
                     return;
             }
-        } else if(pushButtons == 4) { // leftmost button was pressed
-            return;
-
         } else {
             
             // if no buttons have been pressed, print switches as hex

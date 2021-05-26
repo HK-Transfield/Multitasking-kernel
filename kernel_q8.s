@@ -68,6 +68,10 @@ main:
     la $2, serial_process
     sw $2, pcb_ear($1)
 
+# Setup $ra for exiting
+    la $2, exit
+    sw $2, pcb_ra($1)
+
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
 
@@ -93,6 +97,10 @@ main:
     la $2, parallel_process
     sw $2, pcb_ear($1)
 
+# Setup $ra for exiting
+    la $2, exit
+    sw $2, pcb_ra($1)
+
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
 
@@ -114,8 +122,15 @@ main:
     la $2, gameSelect_process
     sw $2, pcb_ear($1)
 
+# Setup $ra for exiting
+    la $2, exit
+    sw $2, pcb_ra($1)
+
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
+
+    # la $1, gameSelect_pcb
+    # sw $1, previous_process($0)
 	
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
@@ -220,6 +235,7 @@ schedule:
     sw $2, 0($sp)                   # Save the value of only one register
 
     lw $13, current_process($0)     # Get current process
+    sw $13, previous_process($0)    # Set as previous process
     lw $13, pcb_link($13)           # Get next process from pcb_link field
     sw $13, current_process($0)     # Set next process as current process
 
@@ -278,6 +294,21 @@ load_context:
 
     rfe                     # Return to new process
 
+exit:
+    subui $sp, $sp, 2
+    sw $1, 0($sp)
+    sw $2, 1($sp)
+
+    lw $2, current_process($0) # Load process that is exiting
+    lw $2, pcb_link($2)        # Get the next process in the list
+
+    lw $1, previous_process($0) # Load process that ran before this one
+    sw $2, pcb_link($1)         # Set its next process to current's next process
+   
+    lw $2, 1($sp)
+    lw $1, 0($sp)
+    addui $sp, $sp, 2
+    rfe
 
 ######################################################################
 
@@ -287,6 +318,7 @@ time_slice: .word 1
 .bss
 old_vector: .word
 current_process: .word
+previous_process: .word
 
 # Define stack spaces
     .space 200             # Stack label is below because stacks grow form the top of the stack
