@@ -3,10 +3,13 @@
 void writeHexSSD(int n) {
     WrampParallel->LowerRightSSD = n;
     n = n >> 4;
+
     WrampParallel->LowerLeftSSD = n;
     n = n >> 4;
+
     WrampParallel->UpperRightSSD = n;
     n = n >> 4;
+    
     WrampParallel->UpperLeftSSD = n;
 }
 
