@@ -123,14 +123,14 @@ main:
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
-    la $2, exit
-    sw $2, pcb_ra($1)
+    la $ra, exit
+    sw $ra, pcb_ra($1)
 
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
 
-    # la $1, gameSelect_pcb
-    # sw $1, previous_process($0)
+    la $1, gameSelect_pcb
+    sw $1, previous_process($0)
 	
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
@@ -247,6 +247,22 @@ schedule:
 
     bnez $13, set_time_slice_games  # If next process is the game select, prioritise it
     
+exit:
+    break
+    subui $sp, $sp, 2
+    sw $1, 0($sp)
+    sw $2, 1($sp)
+
+    lw $2, current_process($0) # Load process that is exiting
+    lw $2, pcb_link($2)        # Get the next process in the list
+
+    lw $1, previous_process($0) # Load process that ran before this one
+    sw $2, pcb_link($1)         # Set its next process to current's next process
+   
+    lw $2, 1($sp)
+    lw $1, 0($sp)
+    addui $sp, $sp, 2
+
 set_time_slice_ports:   
 
 # The next process is either the serial task or parallel task
@@ -294,21 +310,7 @@ load_context:
 
     rfe                     # Return to new process
 
-exit:
-    subui $sp, $sp, 2
-    sw $1, 0($sp)
-    sw $2, 1($sp)
 
-    lw $2, current_process($0) # Load process that is exiting
-    lw $2, pcb_link($2)        # Get the next process in the list
-
-    lw $1, previous_process($0) # Load process that ran before this one
-    sw $2, pcb_link($1)         # Set its next process to current's next process
-   
-    lw $2, 1($sp)
-    lw $1, 0($sp)
-    addui $sp, $sp, 2
-    rfe
 
 ######################################################################
 
