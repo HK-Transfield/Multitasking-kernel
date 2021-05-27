@@ -131,6 +131,27 @@ main:
 
     la $1, gameSelect_pcb
     sw $1, previous_process($0)
+
+# PCB setup for the idle task process
+#########################################	
+    addi $5, $0, 0x4D       # Unmask IRQ2,KU=1,OKU=1,IE=0,OIE=1
+    
+    la $1, idle_pcb
+
+# Setup the link field    
+    la $2, idle_pcb
+    sw $2, pcb_link($1)
+
+# Setup the stack pointer
+    la $2, idle_stack
+    sw $2, pcb_sp($1)
+
+# Setup the $ear field
+    la $2, idle_process
+    sw $2, pcb_ear($1)
+
+# Setup the $cctrl field
+    sw $5, pcb_cctrl($1)
 	
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
@@ -168,6 +189,21 @@ parallel_process:
     
 gameSelect_process:
     j gameSelect_main
+
+idle_process:
+    addi $6, $0, 'I'
+    sw $6, par_lrssd($0)
+
+    addi $6, $0, 'D'
+    sw $6, par_llssd($0)
+
+    addi $6, $0, 'L'
+    sw $6, par_urssd($0)
+
+    addi $6, $0, 'E'
+    sw $6, par_ulssd($0)
+
+    j idle_process
 
 ######################################################################
 
@@ -231,6 +267,16 @@ save_context:
     sw $1, pcb_cctrl($13)
 
 schedule:
+#     lw $13, total_processes($0)
+#     bnez $13, schedule_processes
+
+# schedule_idle:
+#     la $13, idle_pcb
+#     sw $13, current_process($0)
+#     sw $13, previous_process($0)
+#     bnez $13, set_time_slice_ports
+
+schedule_processes:
     subui $sp, $sp, 1               # Create a small stack frame
     sw $2, 0($sp)                   # Save the value of only one register
 
@@ -295,32 +341,40 @@ load_context:
     rfe                     # Return to new process
 
 exit:
-    subui $sp, $sp, 3
+    subui $sp, $sp, 4
     sw $ra, 0($sp)
     sw $1, 1($sp)
     sw $2, 2($sp)
+    sw $3, 3($sp)
 
     lw $2, current_process($0) # Load process that is exiting
     lw $2, pcb_link($2)        # Get the next process in the list
-
+    
     lw $1, previous_process($0) # Load process that ran before this one
     sw $2, pcb_link($1)         # Set its next process to current's next process
-   
+
+    # lw $2, total_processes($0)
+    # subui $2, $2, 1
+    # sw $2, total_processes($0)
+  
+    lw $3, 3($sp)
     lw $2, 2($sp)
     lw $1, 1($sp)
     sw $ra, 0($sp)
-    addui $sp, $sp, 3
+    addui $sp, $sp, 4
     jr $ra
 
 ######################################################################
 
 .data
 time_slice: .word 1
+total_processes: .word 3
 	
 .bss
 old_vector: .word
 current_process: .word
 previous_process: .word
+set_to_idle: .word
 
 # Define stack spaces
     .space 200             # Stack label is below because stacks grow form the top of the stack
@@ -332,6 +386,9 @@ parallel_stack:
 	.space 200
 gameSelect_stack:	
 
+    .space 200
+idle_stack:
+
 # Define PCB spaces
 serial_pcb:
     .space 18
@@ -341,3 +398,6 @@ parallel_pcb:
 
 gameSelect_pcb:
 	.space 18
+
+idle_pcb:
+    .space 18
