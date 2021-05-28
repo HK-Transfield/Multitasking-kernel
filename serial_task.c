@@ -1,3 +1,11 @@
+/*******************************
+ * Harmon Transfield
+ * 1317381
+ * 
+ * Serial Task
+ * Multitasking Kernel, COMPX203
+ *******************************/
+
 #include "wramp.h"
 
 int counter = 0;
@@ -56,13 +64,13 @@ void format_3(int counter) {
 
 void format_clear() {
     transmitCharSp2('\r');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
-    transmitCharSp2(' ');
+    transmitCharSp2('G');
+    transmitCharSp2('o');
+    transmitCharSp2('o');
+    transmitCharSp2('d');
+    transmitCharSp2('b');
+    transmitCharSp2('y');
+    transmitCharSp2('e');
 }
 
 void serial_main() {

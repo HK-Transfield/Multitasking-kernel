@@ -1,3 +1,16 @@
+###################################
+# Harmon Transfield
+# 1317381
+#
+# Multitasking Kernel, COMPX203
+###################################
+
+
+
+######################################################################
+# DECLARE CONSTANTS USING .equ DIRECTIVE
+######################################################################
+
 # Define programmable timer macros
 .equ timer_ctrl,    0x72000
 .equ timer_load,    0x72001
@@ -40,6 +53,10 @@
 .equ pcb_ear, 16
 .equ pcb_cctrl, 17
 
+
+
+######################################################################
+# MAIN ENTRY POINT OF THE MULTITASKING KERNEL
 ######################################################################
 
 .text
@@ -69,7 +86,7 @@ main:
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
-    la $ra, exit
+    la $ra, exit_process
     sw $ra, pcb_ra($1)
 
 # Setup the $cctrl field
@@ -98,7 +115,7 @@ main:
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
-    la $ra, exit
+    la $ra, exit_process
     sw $ra, pcb_ra($1)
 
 # Setup the $cctrl field
@@ -123,7 +140,7 @@ main:
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
-    la $ra, exit
+    la $ra, exit_process
     sw $ra, pcb_ra($1)
 
 # Setup the $cctrl field
@@ -142,7 +159,7 @@ main:
     la $2, idle_pcb
     sw $2, pcb_link($1)
 
-# Setup the stack pointer
+# Setup the Multitasking Kernelstack pointer
     la $2, idle_stack
     sw $2, pcb_sp($1)
 
@@ -152,6 +169,9 @@ main:
 
 # Setup the $cctrl field
     sw $5, pcb_cctrl($1)
+
+# Interrupt setup
+#########################################	
 	
 # Adjust the CPU control register to setup interrupts
     movsg $1, $cctrl        # Copy the current value of $cctrl into $1
@@ -172,14 +192,19 @@ main:
     addui $1, $0, 0x3       # Enable the timer and set auto-restart mode
     sw $1, timer_ctrl($0)  
 
+# Restore registers
     lw $5, 2($sp)
     lw $2, 1($sp)
     lw $1, 0($sp)
-    addui $sp, $sp, 3
+    addui $sp, $sp, 3       # Destroy stack frame
 
-    j load_context
+    j load_context          # Begin first process
+
+
 
 ######################################################################
+# PROCESSES MULTITASKED BY THE KERNEL
+######################################################################	
 
 serial_process:
     j serial_main
@@ -191,20 +216,32 @@ gameSelect_process:
     j gameSelect_main
 
 idle_process:
-    addi $6, $0, 'I'
-    sw $6, par_lrssd($0)
+    sw $0, par_ctrl($0)     # Enable individual control of SSD segments
+loop:
 
-    addi $6, $0, 'D'
-    sw $6, par_llssd($0)
+# Write the word 'IDLE' to the SSD
+    addui $6, $0, 0
+    lw $7, idle($6)
+    sw $7, par_ulssd($0)
 
-    addi $6, $0, 'L'
-    sw $6, par_urssd($0)
+    addui $6, $6, 1
+    lw $7, idle($6)
+    sw $7, par_urssd($0)
 
-    addi $6, $0, 'E'
-    sw $6, par_ulssd($0)
+    addui $6, $6, 1
+    lw $7, idle($6)
+    sw $7, par_llssd($0)
 
-    j idle_process
+    addui $6, $6, 1
+    lw $7, idle($6)
+    sw $7, par_lrssd($0)
 
+    j loop          # Infinite loop
+
+
+
+######################################################################
+# HANDLERS FOR EXCEPTIONS AND INTERRUPTS
 ######################################################################
 
 handler:
@@ -228,8 +265,12 @@ handle_time_slice:
     sw $13, time_slice($0)
 
     beqz $13, dispatcher
-    rfe
+    rfe                 # If not, return from exception
 
+
+
+######################################################################
+# DISPATCHER
 ######################################################################
 
 dispatcher:
@@ -255,7 +296,7 @@ save_context:
     sw $ra, pcb_ra($13)
 
 # Save old value of $13
-    movsg $1, $ers          # $1 is saved now so we can use it
+    movsg $1, $ers                  # $1 is saved now so we can use it
     sw $1, pcb_reg13($13)
  
 # Save $ear
@@ -267,16 +308,6 @@ save_context:
     sw $1, pcb_cctrl($13)
 
 schedule:
-#     lw $13, total_processes($0)
-#     bnez $13, schedule_processes
-
-# schedule_idle:
-#     la $13, idle_pcb
-#     sw $13, current_process($0)
-#     sw $13, previous_process($0)
-#     bnez $13, set_time_slice_ports
-
-schedule_processes:
     subui $sp, $sp, 1               # Create a small stack frame
     sw $2, 0($sp)                   # Save the value of only one register
 
@@ -287,11 +318,10 @@ schedule_processes:
 
     la $2, gameSelect_pcb           # Get the address of the game select process
     sequ $13, $13, $2               # Check if it is the next process
-    
+    bnez $13, set_time_slice_games  # If next process is the game select, prioritise it
+
     lw $2, 0($sp)                   # Restore the register used
     addui $sp, $sp, 1               # Destroy the stack frame
-
-    bnez $13, set_time_slice_games  # If next process is the game select, prioritise it
 
 set_time_slice_ports:   
 
@@ -337,48 +367,63 @@ load_context:
     lw $12, pcb_reg12($13)
     lw $sp, pcb_sp($13)
     lw $ra, pcb_ra($13)
+    rfe                         # Return to new process
 
-    rfe                     # Return to new process
+exit_process:
+    subui $sp, $sp, 3           # Create stack frame
 
-exit:
-    subui $sp, $sp, 4
-    sw $ra, 0($sp)
-    sw $1, 1($sp)
-    sw $2, 2($sp)
-    sw $3, 3($sp)
+# Save some registers to use   
+    sw $1, 0($sp)
+    sw $2, 1($sp)
+    sw $3, 2($sp)
 
-    lw $2, current_process($0) # Load process that is exiting
-    lw $2, pcb_link($2)        # Get the next process in the list
-    
+# Manipulate linked list
+    lw $2, current_process($0)  # Load process that is exiting
     lw $1, previous_process($0) # Load process that ran before this one
+
+    sequ $3, $2, $1             # Check if this is the last task
+    beqz $3, set_next       # If not, move to next processs
+
+set_idle:
+    la $3, idle_pcb             # All tasks have exited, execute idle process
+    sw $3, pcb_link($1)         # Set idle process to be next
+    j return
+
+set_next:
+    lw $2, pcb_link($2)         # Get the next process in the list
     sw $2, pcb_link($1)         # Set its next process to current's next process
 
-    # lw $2, total_processes($0)
-    # subui $2, $2, 1
-    # sw $2, total_processes($0)
-  
-    lw $3, 3($sp)
-    lw $2, 2($sp)
-    lw $1, 1($sp)
-    sw $ra, 0($sp)
-    addui $sp, $sp, 4
-    jr $ra
+return:
 
+# Restore registers
+    lw $3, 2($sp)
+    lw $2, 1($sp)
+    lw $1, 0($sp)
+    addui $sp, $sp, 3           # Destroy stack frame
+    jr $ra                      # Return
+
+
+######################################################################
+# ASSIGN SPACE FOR DIRECTIVES
 ######################################################################
 
 .data
-time_slice: .word 1
-total_processes: .word 3
-	
+time_slice:         .word 1
+idle:                           #                
+    .word 0x76 #H
+	.word 0x79 #E
+	.word 0x38 #L
+	.word 0x38 #L
+
 .bss
-old_vector: .word
-current_process: .word
-previous_process: .word
-set_to_idle: .word
+old_vector:         .word
+current_process:    .word
+previous_process:   .word
 
 # Define stack spaces
+#########################################	
     .space 200             # Stack label is below because stacks grow form the top of the stack
-serial_stack:             # towards the lower addresses
+serial_stack:              # towards the lower addresses
 
 	.space 200
 parallel_stack:	
@@ -390,6 +435,7 @@ gameSelect_stack:
 idle_stack:
 
 # Define PCB spaces
+#########################################	
 serial_pcb:
     .space 18
 

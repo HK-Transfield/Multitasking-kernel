@@ -1,3 +1,11 @@
+/*******************************
+ * Harmon Transfield
+ * 1317381
+ * 
+ * Parallel Task
+ * Multitasking Kernel, COMPX203
+ *******************************/
+
 #include "wramp.h"
 
 void writeHexSSD(int n) {
@@ -35,33 +43,38 @@ void writeDecSSD(int n) {
 void parallel_main() {
 
     // declase variables
-    int readSwitches = 0;
-    int pushButtons = 0;
+    int switches = 0;   // stores the value of the parallel switches
+    int buttons = 0;    // stores the value of the parallel push buttons
+    int pressed = 0;    // tracks the last button pressed
 
     while(1) { // begin infinite loop
 
-        // read values from parallal I/O
-        readSwitches = WrampParallel->Switches;
-        pushButtons = WrampParallel->Buttons;
+        // read values from parallel ports
+        switches = WrampParallel->Switches;
+        buttons = WrampParallel->Buttons;
 
-        if(pushButtons == 1 || pushButtons == 2 || pushButtons == 4) { // rightmost push button was pressed
+        if(buttons == 1 || buttons == 2 || buttons == 4) { // any button has been pressed
             while(1) {
-                readSwitches = WrampParallel->Switches;
-                pushButtons = WrampParallel->Buttons;
+                switches = WrampParallel->Switches;
+                buttons = WrampParallel->Buttons;
 
-                if (pushButtons == 1)
-                    writeHexSSD(readSwitches);
+                if (buttons == 1 || pressed == 1) {
+                    pressed = 1;
+                    writeHexSSD(switches);
+                }
+                    
+                if (buttons == 2 || pressed == 2) {
+                    pressed = 2;
+                    writeDecSSD(switches);
+                }
                 
-                if (pushButtons == 2)
-                    writeDecSSD(readSwitches);
-                
-                if (pushButtons == 4)
+                if (buttons == 4)
                     return;
             }
         } else {
             
             // if no buttons have been pressed, print switches as hex
-            writeHexSSD(readSwitches);
+            writeHexSSD(switches);
         }
     }
 }
