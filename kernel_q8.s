@@ -1,3 +1,17 @@
+###################################
+# Harmon Transfield
+# 1317381
+#
+# Exit Cleanly
+# Multitasking Kernel, COMPX203
+###################################
+
+
+
+######################################################################
+# DECLARE CONSTANTS USING .equ DIRECTIVE
+######################################################################
+
 # Define programmable timer macros
 .equ timer_ctrl,    0x72000
 .equ timer_load,    0x72001
@@ -40,6 +54,10 @@
 .equ pcb_ear, 16
 .equ pcb_cctrl, 17
 
+
+
+######################################################################
+# MAIN ENTRY POINT OF THE MULTITASKING KERNEL
 ######################################################################
 
 .text
@@ -158,7 +176,11 @@ main:
 
     j load_context
 
+
+
 ######################################################################
+# PROCESSES MULTITASKED BY THE KERNEL
+######################################################################	
 
 serial_process:
     j serial_main
@@ -169,6 +191,10 @@ parallel_process:
 gameSelect_process:
     j gameSelect_main
 
+
+
+######################################################################
+# HANDLERS FOR EXCEPTIONS AND INTERRUPTS
 ######################################################################
 
 handler:
@@ -194,6 +220,10 @@ handle_time_slice:
     beqz $13, dispatcher
     rfe
 
+
+
+######################################################################
+# DISPATCHER AND SCHEDULER TO SAVE CONTEXT AND LOAD NEXT PROCESS
 ######################################################################
 
 dispatcher:
@@ -292,7 +322,7 @@ load_context:
     lw $sp, pcb_sp($13)
     lw $ra, pcb_ra($13)
 
-    rfe                     # Return to new process
+    rfe                             # Return to new process
 
 exit:
     subui $sp, $sp, 3
@@ -300,7 +330,7 @@ exit:
     sw $1, 1($sp)
     sw $2, 2($sp)
 
-    lw $2, current_process($0) # Load process that is exiting
+    lw $2, current_process($0)  # Load process that is exiting
     lw $2, pcb_link($2)        # Get the next process in the list
 
     lw $1, previous_process($0) # Load process that ran before this one
@@ -324,7 +354,7 @@ previous_process: .word
 
 # Define stack spaces
     .space 200             # Stack label is below because stacks grow form the top of the stack
-serial_stack:             # towards the lower addresses
+serial_stack:              # towards the lower addresses
 
 	.space 200
 parallel_stack:	

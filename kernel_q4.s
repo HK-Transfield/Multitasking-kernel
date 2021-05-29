@@ -1,3 +1,11 @@
+###################################
+# Harmon Transfield
+# 1317381
+#
+# Single Task "Multitasking"
+# Multitasking Kernel, COMPX203
+###################################
+
 # Define programmable timer macros
 .equ timer_ctrl,    0x72000
 .equ timer_load,    0x72001
@@ -206,7 +214,7 @@ old_vector: .word
 current_process: .word
 
     .space 200              # Stack label is below because stacks grow form the top of the stack
-serial_stack:             # towards the lower addresses
+serial_stack:               # towards the lower addresses
 
 serial_pcb:
     .space 18

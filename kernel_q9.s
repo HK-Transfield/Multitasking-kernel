@@ -2,6 +2,7 @@
 # Harmon Transfield
 # 1317381
 #
+# Idle Task
 # Multitasking Kernel, COMPX203
 ###################################
 
@@ -218,8 +219,6 @@ gameSelect_process:
 idle_process:
     sw $0, par_ctrl($0)     # Enable individual control of SSD segments
 loop:
-
-# Write the word 'IDLE' to the SSD
     addui $6, $0, 0
     lw $7, idle($6)
     sw $7, par_ulssd($0)
@@ -270,7 +269,7 @@ handle_time_slice:
 
 
 ######################################################################
-# DISPATCHER
+# DISPATCHER AND SCHEDULER TO SAVE CONTEXT AND LOAD NEXT PROCESS
 ######################################################################
 
 dispatcher:
@@ -409,11 +408,11 @@ return:
 
 .data
 time_slice:         .word 1
-idle:                           #                
-    .word 0x76 #H
-	.word 0x79 #E
-	.word 0x38 #L
-	.word 0x38 #L
+idle:                                        
+                    .word 0x76 #H
+	                .word 0x79 #E
+	                .word 0x38 #L
+	                .word 0x38 #L
 
 .bss
 old_vector:         .word

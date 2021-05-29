@@ -10,22 +10,27 @@
 
 int counter = 0;
 
-void transmitCharSp2(int c) {
+void transmitCharSp2(int c)
+{
     // check if the TDS bit is set
-    while (!(WrampSp2->Stat & 0x2));
-    
+    while (!(WrampSp2->Stat & 0x2))
+        ;
+
     // transmit character to serial port 2
     WrampSp2->Tx = c;
 }
 
 /**
  * Sets the format of the time to "\rmm:ss"
- * i.e. minutes and seconds
+ * i.e. minutes and seconds.
+ * 
+ * @param counter The current value from the counter that will be writen to SP2
 */
-void format_1(int counter) {
+void format_1(int counter)
+{
     int minutes = counter / 100 / 60;
     int seconds = counter / 100 % 60;
-    
+
     transmitCharSp2('\r');
     transmitCharSp2(minutes / 10 + '0');
     transmitCharSp2(minutes % 10 + '0');
@@ -39,8 +44,11 @@ void format_1(int counter) {
 /**
  * Sets the format of the time to "\rssss.ss"
  * i.e. seconds pring to two decimal places
+ * 
+ * @param counter The current value from the counter that will be writen to SP2
 */
-void format_2(int counter) {
+void format_2(int counter)
+{
     transmitCharSp2('\r');
     transmitCharSp2(counter / 100000 % 10 + '0');
     transmitCharSp2(counter / 10000 % 10 + '0');
@@ -51,7 +59,14 @@ void format_2(int counter) {
     transmitCharSp2(counter % 10 + '0');
 }
 
-void format_3(int counter) {
+/**
+ * Will set the format to "\rtttttt"
+ * i.e. the number of timer interrupts.
+ * 
+ * @param counter The current value from the counter that will be writen to SP2
+*/
+void format_3(int counter)
+{
     transmitCharSp2('\r');
     transmitCharSp2(counter / 100000 % 10 + '0');
     transmitCharSp2(counter / 10000 % 10 + '0');
@@ -62,7 +77,11 @@ void format_3(int counter) {
     transmitCharSp2(' ');
 }
 
-void format_clear() {
+/**
+ * Program is exiting, write a goodbye message to SP2
+*/
+void format_clear()
+{
     transmitCharSp2('\r');
     transmitCharSp2('G');
     transmitCharSp2('o');
@@ -73,36 +92,47 @@ void format_clear() {
     transmitCharSp2('e');
 }
 
-void serial_main() {
+/**
+ * Main entry point for the serial task
+*/
+void serial_main()
+{
+    int pressed = 0; // tracks the last valid key pressed by the user
 
-    int rx = 0;
-    int currFormat = 0;
+    while (1)
+    {
+        if (WrampSp2->Rx == '1' || WrampSp2->Rx == '2' || WrampSp2->Rx == '3' || WrampSp2->Rx == 'q')
+        {
+            while (1)
+            {
 
-    while(1) {
-        if (WrampSp2->Rx == '1' || WrampSp2->Rx == '2' || WrampSp2->Rx == '3' || WrampSp2->Rx == 'q') { // 1, 2, 3, or q have been recieved
-            while (1) {
-
-                if (WrampSp2->Rx == 'q') { // q, quits the program
+                if (WrampSp2->Rx == 'q')
+                {
                     format_clear();
                     return;
                 }
-                
-                if (WrampSp2->Rx == '1' || currFormat == '1') {
-                    currFormat = '1';
+
+                if (WrampSp2->Rx == '1' || pressed == '1')
+                {
+                    pressed = '1';
                     format_1(counter);
                 }
-                     
-                if (WrampSp2->Rx == '2' || currFormat == '2') {
-                    currFormat = '2';
+
+                if (WrampSp2->Rx == '2' || pressed == '2')
+                {
+                    pressed = '2';
                     format_2(counter);
                 }
 
-                if (WrampSp2->Rx == '3' || currFormat == '3') {
-                    currFormat = '3';
+                if (WrampSp2->Rx == '3' || pressed == '3')
+                {
+                    pressed = '3';
                     format_3(counter);
                 }
             }
         }
+
+        // if no buttons have been pressed, print in first format
         format_1(counter);
-    }    
+    }
 }

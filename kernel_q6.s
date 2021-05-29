@@ -1,3 +1,11 @@
+###################################
+# Harmon Transfield
+# 1317381
+#
+# Multitasking Tasks
+# Multitasking Kernel, COMPX203
+###################################
+
 # Define programmable timer macros
 .equ timer_ctrl,    0x72000
 .equ timer_load,    0x72001
