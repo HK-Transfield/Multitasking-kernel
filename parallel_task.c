@@ -17,13 +17,13 @@
 void writeHexSSD(int n)
 {
     WrampParallel->LowerRightSSD = n;
-    n = n >> 4;
+    n >>= 4;
 
     WrampParallel->LowerLeftSSD = n;
-    n = n >> 4;
+    n >>= 4;
 
     WrampParallel->UpperRightSSD = n;
-    n = n >> 4;
+    n >>= 4;
 
     WrampParallel->UpperLeftSSD = n;
 }
@@ -41,15 +41,15 @@ void writeDecSSD(int n)
 
     rem = n % 10;
     WrampParallel->LowerRightSSD = rem;
-    n = n / 10;
+    n /= 10;
 
     rem = n % 10;
     WrampParallel->LowerLeftSSD = rem;
-    n = n / 10;
+    n /= 10;
 
     rem = n % 10;
     WrampParallel->UpperRightSSD = rem;
-    n = n / 10;
+    n /= 10;
 
     rem = n % 10;
     WrampParallel->UpperLeftSSD = rem;
@@ -61,7 +61,7 @@ void writeDecSSD(int n)
 void parallel_main()
 {
 
-    // declase variables
+    // declare variables
     int switches = 0; // stores the value of the parallel switches
     int buttons = 0;  // stores the value of the parallel push buttons
     int pressed = 0;  // tracks the last button pressed

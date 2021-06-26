@@ -83,7 +83,7 @@ main:
     sw $2, pcb_sp($1)
 
 # Setup the $ear field
-    la $2, serial_process
+    la $2, serial_main
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
@@ -112,7 +112,7 @@ main:
     sw $2, pcb_sp($1)
 
 # Setup the $ear field
-    la $2, parallel_process
+    la $2, parallel_main
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
@@ -137,7 +137,7 @@ main:
     sw $2, pcb_sp($1)
 
 # Setup the $ear field
-    la $2, gameSelect_process
+    la $2, gameSelect_main
     sw $2, pcb_ear($1)
 
 # Setup $ra for exiting
@@ -204,17 +204,40 @@ main:
 
 
 ######################################################################
-# PROCESSES MULTITASKED BY THE KERNEL
+# EXIT PROCESS CALLED WHEN A PROCESS QUITS
 ######################################################################	
 
-serial_process:
-    j serial_main
-    
-parallel_process:
-    j parallel_main
-    
-gameSelect_process:
-    j gameSelect_main
+exit_process:
+    subui $sp, $sp, 3           # Create stack frame
+
+# Save some registers to use   
+    sw $1, 0($sp)
+    sw $2, 1($sp)
+    sw $3, 2($sp)
+
+# Manipulate linked list
+    lw $2, current_process($0)  # Load process that is exiting
+    lw $1, previous_process($0) # Load process that ran before this one
+
+    sequ $3, $2, $1             # Check if this is the last task
+    beqz $3, set_next       # If not, move to next processs
+
+set_idle:
+    la $2, idle_pcb             # All tasks have exited, execute idle process
+    j return
+
+set_next:
+    lw $2, pcb_link($2)         # Get the next process in the list
+
+return:
+    sw $2, pcb_link($1)         # Set its next process to current's next process
+
+# Restore registers
+    lw $3, 2($sp)
+    lw $2, 1($sp)
+    lw $1, 0($sp)
+    addui $sp, $sp, 3           # Destroy stack frame
+    jr $ra                      # Return
 
 idle_process:
     sw $0, par_ctrl($0)     # Enable individual control of SSD segments
@@ -368,38 +391,6 @@ load_context:
     lw $ra, pcb_ra($13)
     rfe                         # Return to new process
 
-exit_process:
-    subui $sp, $sp, 3           # Create stack frame
-
-# Save some registers to use   
-    sw $1, 0($sp)
-    sw $2, 1($sp)
-    sw $3, 2($sp)
-
-# Manipulate linked list
-    lw $2, current_process($0)  # Load process that is exiting
-    lw $1, previous_process($0) # Load process that ran before this one
-
-    sequ $3, $2, $1             # Check if this is the last task
-    beqz $3, set_next       # If not, move to next processs
-
-set_idle:
-    la $3, idle_pcb             # All tasks have exited, execute idle process
-    sw $3, pcb_link($1)         # Set idle process to be next
-    j return
-
-set_next:
-    lw $2, pcb_link($2)         # Get the next process in the list
-    sw $2, pcb_link($1)         # Set its next process to current's next process
-
-return:
-
-# Restore registers
-    lw $3, 2($sp)
-    lw $2, 1($sp)
-    lw $1, 0($sp)
-    addui $sp, $sp, 3           # Destroy stack frame
-    jr $ra                      # Return
 
 
 ######################################################################
@@ -409,10 +400,10 @@ return:
 .data
 time_slice:         .word 1
 idle:                                        
-                    .word 0x76 #H
+	                .word 0x06 #I
+                    .word 0x5E #D
+	                .word 0x38 #L
 	                .word 0x79 #E
-	                .word 0x38 #L
-	                .word 0x38 #L
 
 .bss
 old_vector:         .word
