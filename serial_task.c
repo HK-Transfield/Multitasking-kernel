@@ -1,9 +1,7 @@
 /*******************************
- * Harmon Transfield
- * 1317381
+ * HK Transfield
  * 
  * Serial Task
- * Multitasking Kernel, COMPX203
  *******************************/
 
 #include "wramp.h"

@@ -1,9 +1,7 @@
 ###################################
-# Harmon Transfield
-# 1317381
+# HK Transfield
 #
-# Idle Task
-# Multitasking Kernel, COMPX203
+# Multitasking Kernel
 ###################################
 
 
